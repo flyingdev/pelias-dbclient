@@ -1,4 +1,4 @@
-const { Client: ESClient } = require('@elastic/elasticsearch');
+const { Client: ESClient } = require('elasticsearch');
 const { Client: OSClient } = require('@opensearch-project/opensearch');
 const settings = require('pelias-config').generate();
 
@@ -23,7 +23,7 @@ module.exports = function createDbClient() {
     let node = process.env.OPENSEARCH_NODE;
 
     // Fallback: build from pelias.json
-    if (!node && settings.esclient?.hosts?.[0]) {
+    if (!node && settings.esclient && settings.esclient.hosts && settings.esclient.hosts[0]) {
       const { protocol, host, port } = settings.esclient.hosts[0];
       node = `${protocol}://${host}:${port}`;
     }
