@@ -40,40 +40,40 @@ function wrapper( client, parent_logger ){
         logger.error( 'esclient error', err );
         batch.status = 500;
       }
+      if (resp) {
+        const bulkResp = resp.body || resp;
+        if( bulkResp && bulkResp.items ){
+    
+          bulkResp.items.forEach( function( item, i ){
 
-      // response does not contain items
-      if( !resp || !resp.items ){
+            var action = item.hasOwnProperty('create') ? item.create : item.index;
+
+            var task = batch._slots[i];
+            batch._slots[i].status = parseInt( action.status, 10 ) || 888;
+            // console.log( 'set task status', task.status, JSON.stringify( action, null, 2 ) );
+
+            if( task.status > 201 ){
+              logger.error( '[' + action.status + ']', action.error );
+            }
+            // else {
+            //   delete task.cmd; // reclaim memory
+            //   delete task.data; // reclaim memory
+            // }
+
+            // set batch status to highest response code
+            if( batch.status === 999 || task.status > batch.status ){
+              batch.status = task.status;
+            }
+          });
+        } else {
+          logger.error( 'invalid resp from es bulk index operation' );
+          batch.status = 500;
+        }
+      } else {
         logger.error( 'invalid resp from es bulk index operation' );
         batch.status = 500;
       }
 
-      // update batch items with response status
-      else {
-
-        // console.log( resp.items.length, batch._slots.length, payload.length );
-
-        resp.items.forEach( function( item, i ){
-
-          var action = item.hasOwnProperty('create') ? item.create : item.index;
-
-          var task = batch._slots[i];
-          batch._slots[i].status = parseInt( action.status, 10 ) || 888;
-          // console.log( 'set task status', task.status, JSON.stringify( action, null, 2 ) );
-
-          if( task.status > 201 ){
-            logger.error( '[' + action.status + ']', action.error );
-          }
-          // else {
-          //   delete task.cmd; // reclaim memory
-          //   delete task.data; // reclaim memory
-          // }
-
-          // set batch status to highest response code
-          if( batch.status === 999 || task.status > batch.status ){
-            batch.status = task.status;
-          }
-        });
-      }
 
       // retry batch
       if( batch.status > 201 ){
