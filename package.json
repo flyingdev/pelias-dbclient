@@ -38,6 +38,7 @@
   "dependencies": {
     "@hapi/joi": "^16.0.0",
     "@opensearch-project/opensearch": "^3.5.1",
+    "dotenv": "^17.2.3",
     "elasticsearch": "^16.0.0",
     "pelias-config": "^6.0.0",
     "pelias-logger": "^1.2.1",
