@@ -1,3 +1,10 @@
+(() => {
+  try {
+    require('dotenv').config();
+  } catch (err) {
+  }
+})();
+
 if (process.env.NODE_ENV !== 'test') {
   require('./src/configValidation').validate(require('pelias-config').generate());
 }

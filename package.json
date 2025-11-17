@@ -1,5 +1,5 @@
 {
-  "name": "pelias-dbclient",
+  "name": "flyingdev-pelias-dbclient-opensearch",
   "version": "0.0.0-development",
   "description": "Database client for Pelias import pipelines",
   "engines": {
@@ -37,7 +37,8 @@
   },
   "dependencies": {
     "@hapi/joi": "^16.0.0",
-    "@opensearch-project/opensearch": "^3.5.1",
+    "@opensearch-project/opensearch": "^1.2.0",
+    "dotenv": "^17.2.3",
     "elasticsearch": "^16.0.0",
     "pelias-config": "^6.0.0",
     "pelias-logger": "^1.2.1",
