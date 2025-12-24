@@ -3,9 +3,9 @@
 >[Mapzen](https://www.mapzen.com/). Our official user documentation is
 >[here](https://github.com/pelias/documentation).
 
-# Pelias Elasticsearch database client
+# Pelias OpenSearch database client
 
-This module provides a Node.js stream for bulk-inserting documents into [Elasticsearch](https://www.elastic.co/products/elasticsearch).
+This module provides a Node.js stream for bulk-inserting documents into [OpenSearch](https://opensearch.org/).
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/pelias/dbclient.svg)](https://greenkeeper.io/)
 
@@ -17,25 +17,25 @@ $ npm install
 ```
 
 ## Usage
-This module returns “streamFactory” —a function that produces a transforming stream. The stream puts documents into elasticsearch during import pipeline. Note: this stream triggers finish event only after all documents are stored into elasticsearch.
+This module returns “streamFactory” —a function that produces a transforming stream. The stream puts documents into opensearch during import pipeline. Note: this stream triggers finish event only after all documents are stored into opensearch.
 
 
 ```javascript
 'use strict';
 
 // some_importer.js
-
 const streamify = require('stream-array');
 const through = require('through2');
 const Document = require('pelias-model').Document;
 const dbMapper = require('pelias-model').createDocumentMapperStream;
 const dbclient = require('pelias-dbclient');
 
-const elasticsearch = require('elasticsearch');
+const { Client } = require('@opensearch-project/opensearch'); 
 const config = require('pelias-config').generate();
-const elasticDeleteQuery = require('elastic-deletebyquery');
 
 const timestamp = Date.now();
+
+const client = new Client(config.dbclient);
 
 const stream = streamify([1, 2, 3])
   .pipe(through.obj((item, enc, next) => {
@@ -45,32 +45,32 @@ const stream = streamify([1, 2, 3])
     next(null, doc);
   }))
   .pipe(dbMapper())
-  .pipe(dbclient()); // put documents into elasticsearch
+  .pipe(dbclient());
 
 stream.on('finish', () => {
-  const client = new elasticsearch.Client(config.esclient);
-  elasticDeleteQuery(client);
-
   const options = {
     index: config.schema.indexName,
     body: {
       query: {
-        "bool": {
-          "must": [
-            {"term": { "source":  "sourceType" }}
+        bool: {
+          must: [
+            { term: { "source": "sourceType" } }
           ],
-          "must_not": [
-            {"term": { "timestamp":  timestamp }}
+          must_not: [
+            { term: { "timestamp": timestamp } }
           ]
         }
       }
     }
   };
 
-  client.deleteByQuery(options, (err, response) => {
-    console.log('The elements deleted are: %s', response.elements);
+  client.deleteByQuery(options).then(response => {
+    console.log('The elements deleted are:', response.body.deleted);
+  }).catch(err => {
+    console.error('Error deleting documents:', err);
   });
 });
+
 
 ```
 

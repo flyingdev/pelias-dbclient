@@ -37,7 +37,7 @@ function wrapper( client, parent_logger ){
 
       // major error
       if( err ){
-        logger.error( 'esclient error', err );
+        logger.error( 'dbclient error', err );
         batch.status = 500;
       }
       if (resp) {

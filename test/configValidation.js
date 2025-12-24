@@ -9,7 +9,6 @@ module.exports.tests = {};
 module.exports.tests.validate = function(test, common) {
   test('config without dbclient should throw error', function(t) {
     var config = {
-      esclient: {},
       schema: {
         indexName: 'example_index'
       }
@@ -27,7 +26,6 @@ module.exports.tests.validate = function(test, common) {
       dbclient: {
         batchSize: 500
       },
-      esclient: {},
       schema: {
         indexName: 'example_index'
       }
@@ -47,7 +45,6 @@ module.exports.tests.validate = function(test, common) {
           statFrequency: value,
           batchSize: 500
         },
-        esclient: {},
         schema: {
           indexName: 'example_index'
         }
@@ -69,7 +66,6 @@ module.exports.tests.validate = function(test, common) {
         statFrequency: 17.3,
         batchSize: 500
       },
-      esclient: {},
       schema: {
         indexName: 'example_index'
       }
@@ -88,7 +84,6 @@ module.exports.tests.validate = function(test, common) {
       dbclient: {
         statFrequency: 100,
       },
-      esclient: {},
       schema: {
         indexName: 'example_index'
       }
@@ -108,7 +103,6 @@ module.exports.tests.validate = function(test, common) {
           statFrequency: 100,
           batchSize: value
         },
-        esclient: {},
         schema: {
           indexName: 'example_index'
         }
@@ -130,7 +124,6 @@ module.exports.tests.validate = function(test, common) {
         statFrequency: 17,
         batchSize: 50.5
       },
-      esclient: {},
       schema: {
         indexName: 'example_index'
       }
@@ -144,37 +137,12 @@ module.exports.tests.validate = function(test, common) {
 
   });
 
-  test('config with non-object esclient should throw error', function(t) {
-    [null, 17, [], 'string', true].forEach((value) => {
-      var config = {
-        dbclient: {
-          statFrequency: 17,
-          batchSize: 500
-        },
-        esclient: value,
-        schema: {
-          indexName: 'example_index'
-        }
-      };
-
-      t.throws(function() {
-        configValidation.validate(config);
-      }, /"esclient" must be of type object/, 'esclient should be an object');
-
-    });
-
-    t.end();
-
-  });
-
-  test('config with non-integer esclient.requestTimeout should throw error', function(t) {
+  test('config with non-integer dbclient.requestTimeout should throw error', function(t) {
     [null, 'string', {}, [], false].forEach((value) => {
       var config = {
         dbclient: {
           statFrequency: 17,
-          batchSize: 500
-        },
-        esclient: {
+          batchSize: 500,
           requestTimeout: value
         },
         schema: {
@@ -184,20 +152,18 @@ module.exports.tests.validate = function(test, common) {
 
       t.throws(function() {
         configValidation.validate(config);
-      }, /"esclient.requestTimeout" must be a number/, 'esclient.requestTimeout should be a number');
+      }, /"dbclient.requestTimeout" must be a number/, 'dbclient.requestTimeout should be a number');
     });
 
     t.end();
 
   });
 
-  test('config with non-integer esclient.requestTimeout should throw error', function(t) {
+  test('config with non-integer dbclient.requestTimeout should throw error', function(t) {
     var config = {
       dbclient: {
         statFrequency: 17,
-        batchSize: 500
-      },
-      esclient: {
+        batchSize: 500,
         requestTimeout: 17.3
       },
       schema: {
@@ -207,19 +173,17 @@ module.exports.tests.validate = function(test, common) {
 
     t.throws(function() {
       configValidation.validate(config);
-    }, /"esclient.requestTimeout" must be an integer/, 'esclient.requestTimeout should be an integer');
+    }, /"dbclient.requestTimeout" must be an integer/, 'dbclient.requestTimeout should be an integer');
 
     t.end();
 
   });
 
-  test('config with negative esclient.requestTimeout should throw error', function(t) {
+  test('config with negative dbclient.requestTimeout should throw error', function(t) {
     var config = {
       dbclient: {
         statFrequency: 17,
-        batchSize: 500
-      },
-      esclient: {
+        batchSize: 500,
         requestTimeout: -1
       },
       schema: {
@@ -229,7 +193,7 @@ module.exports.tests.validate = function(test, common) {
 
     t.throws(function() {
       configValidation.validate(config);
-    }, /"esclient.requestTimeout" must be larger than or equal to 0/, 'esclient.requestTimeout must be positive');
+    }, /"dbclient.requestTimeout" must be larger than or equal to 0/, 'dbclient.requestTimeout must be positive');
 
     t.end();
 
@@ -242,7 +206,6 @@ module.exports.tests.validate = function(test, common) {
           statFrequency: 0,
           batchSize: 500
         },
-        esclient: {},
         schema: value
       };
 
@@ -263,7 +226,6 @@ module.exports.tests.validate = function(test, common) {
           statFrequency: 0,
           batchSize: 500
         },
-        esclient: {},
         schema: {
           indexName: value
         }
@@ -285,7 +247,6 @@ module.exports.tests.validate = function(test, common) {
         statFrequency: 0,
         batchSize: 500
       },
-      esclient: {},
       schema: {}
     };
 
@@ -296,13 +257,12 @@ module.exports.tests.validate = function(test, common) {
 
   });
 
-  test('config with 0 dbclient.statFrequency and object esclient should not throw error', function(t) {
+  test('config with 0 dbclient.statFrequency should not throw error', function(t) {
     var config = {
       dbclient: {
         statFrequency: 0,
         batchSize: 500
       },
-      esclient: {},
       schema: {
         indexName: 'example_index'
       }
@@ -310,7 +270,7 @@ module.exports.tests.validate = function(test, common) {
 
     t.doesNotThrow(function() {
       proxyquire('../src/configValidation', {
-        'elasticsearch': {
+        'opensearch': {
           Client: function() {
             return { indices: { exists: (indexName, cb) => { cb(false, true); } } };
           }
@@ -326,9 +286,7 @@ module.exports.tests.validate = function(test, common) {
     var config = {
       dbclient: {
         statFrequency: 1,
-        batchSize: 500
-      },
-      esclient: {
+        batchSize: 500,
         requestTimeout: 17
       },
       schema: {
@@ -338,7 +296,7 @@ module.exports.tests.validate = function(test, common) {
 
     t.doesNotThrow(() => {
       proxyquire('../src/configValidation', {
-        'elasticsearch': {
+        'opensearch': {
           Client: function() {
             return { indices: { exists: (indexName, cb) => { cb(false, true); } } };
           }
@@ -355,9 +313,7 @@ module.exports.tests.validate = function(test, common) {
     var config = {
       dbclient: {
         statFrequency: 1,
-        batchSize: 500
-      },
-      esclient: {
+        batchSize: 500,
         requestTimeout: 17
       },
       schema: {
@@ -375,17 +331,16 @@ module.exports.tests.validate = function(test, common) {
 
     t.throws(() => {
       proxyquire('../src/configValidation', {
-        'elasticsearch': {
+        'opensearch': {
           Client: function() {
             return { indices: { exists: (indexName, cb) => { cb(false, false); } } };
           }
         }
       }).validate(config);
 
-    }, /elasticsearch index example_index does not exist/);
+    }, /opensearch index example_index does not exist/);
 
-    t.ok(stderr.match(/ERROR: Elasticsearch index example_index does not exist/));
-
+    t.ok(stderr.match(/ERROR: OpenSearch index example_index does not exist/));
     unhook_intercept();
     t.end();
 

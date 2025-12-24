@@ -2,6 +2,17 @@ const { Client: ESClient } = require('elasticsearch');
 const { Client: OSClient } = require('@opensearch-project/opensearch');
 const settings = require('pelias-config').generate();
 
+function getDatabaseConfig() {
+  const config = peliasConfig.get('dbclient') || peliasConfig.get('esclient');
+  
+  if (!config) {
+    throw new Error('Database configuration missing in pelias.json');
+  }
+
+  const engine = config.engine || (process.env.PELIAS_OPENSEARCH === 'true' ? 'opensearch' : 'elasticsearch');
+
+  return { ...config, engine };
+}
 /**
  * Factory for creating a search client.
  *
@@ -18,22 +29,17 @@ const settings = require('pelias-config').generate();
  * - Else → use Elasticsearch with full esclient config
  */
 module.exports = function createDbClient() {
-  if (process.env.PELIAS_OPENSEARCH === 'true') {
-    // Prefer explicit environment variable
-    let node = process.env.OPENSEARCH_NODE;
+  const { engine, hosts } = getDatabaseConfig();
+  const hostConfig = get(hosts, '[0]');
+  if (!hostConfig) {
+    throw new Error(
+      '[api] No node URL found. Please configure dbclient.hosts in pelias.json.'
+    );
+  }
+  const { protocol, host, port } = hostConfig;
+  const node = `${protocol}://${host}:${port}`;
 
-    // Fallback: build from pelias.json
-    if (!node && settings.esclient && settings.esclient.hosts && settings.esclient.hosts[0]) {
-      const { protocol, host, port } = settings.esclient.hosts[0];
-      node = `${protocol}://${host}:${port}`;
-    }
-
-    if (!node) {
-      throw new Error(
-        '[dbclient] No OpenSearch node URL found. Set OPENSEARCH_NODE or configure esclient.hosts in pelias.json.'
-      );
-    }
-
+  if (engine === 'opensearch') {
     console.log(`[dbclient] Using OpenSearch node: ${node}`);
     return new OSClient({ node });
   }
