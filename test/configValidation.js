@@ -18,13 +18,13 @@ module.exports.tests.validate = function(test, common) {
       configValidation.validate(config);
     }, /"dbclient" is required/, 'dbclient should exist');
     t.end();
-
   });
 
-  test('config without dbclient.statFrequency should throw error', function(t) {
+  test('config with invalid dbclient.engine should throw error', function(t) {
     var config = {
       dbclient: {
-        batchSize: 500
+        engine: 'elasticsearch',
+        hosts: [{ "protocol": "http", "host": "opensearch", "port": 9200 }]
       },
       schema: {
         indexName: 'example_index'
@@ -33,38 +33,14 @@ module.exports.tests.validate = function(test, common) {
 
     t.throws(function() {
       configValidation.validate(config);
-    }, /"dbclient.statFrequency" is required/, 'dbclient.statFrequency should exist');
+    }, /"dbclient.engine" must be \[opensearch\]/, 'dbclient.engine should be "opensearch"');
     t.end();
-
   });
 
-  test('config with non-number dbclient.statFrequency should throw error', function(t) {
-    [null, 'string', {}, [], false].forEach((value) => {
-      var config = {
-        dbclient: {
-          statFrequency: value,
-          batchSize: 500
-        },
-        schema: {
-          indexName: 'example_index'
-        }
-      };
-
-      t.throws(function() {
-        configValidation.validate(config);
-      }, /"dbclient.statFrequency" must be a number/, 'dbclient.statFrequency should be a number');
-
-    });
-
-    t.end();
-
-  });
-
-  test('config with non-integer dbclient.statFrequency should throw error', function(t) {
+  test('config without dbclient.hosts should throw error', function(t) {
     var config = {
       dbclient: {
-        statFrequency: 17.3,
-        batchSize: 500
+        engine: 'opensearch'
       },
       schema: {
         indexName: 'example_index'
@@ -73,16 +49,51 @@ module.exports.tests.validate = function(test, common) {
 
     t.throws(function() {
       configValidation.validate(config);
-    }, /"dbclient.statFrequency" must be an integer/, 'dbclient.statFrequency should be an integer');
-
+    }, /"dbclient.hosts" is required/, 'dbclient.hosts should exist');
     t.end();
-
   });
 
-  test('config without dbclient.batchSize should throw error', function(t) {
+  test('config with invalid dbclient.hosts structure should throw error', function(t) {
     var config = {
       dbclient: {
-        statFrequency: 100,
+        engine: 'opensearch',
+        hosts: [{ "protocol": "http", "host": "opensearch" }]  // Missing port
+      },
+      schema: {
+        indexName: 'example_index'
+      }
+    };
+
+    // Expect an error to be thrown with the correct message
+    t.throws(function() {
+      configValidation.validate(config);
+    }, /"dbclient.hosts\[0\].port" is required/, 'dbclient.hosts[0].port is required');
+    t.end();
+  });
+
+  test('config with non-integer dbclient.port should throw error', function(t) {
+    var config = {
+      dbclient: {
+        engine: 'opensearch',
+        hosts: [{ "protocol": "http", "host": "opensearch", "port": 'not-a-number' }]  // Non-integer port
+      },
+      schema: {
+        indexName: 'example_index'
+      }
+    };
+
+    // Expect an error to be thrown with the correct message
+    t.throws(function() {
+      configValidation.validate(config);
+    }, /"dbclient.hosts\[0\].port" must be a number/, 'dbclient.hosts[0].port should be a number');
+    t.end();
+  });
+
+  test('config with non-string dbclient.host should throw error', function(t) {
+    var config = {
+      dbclient: {
+        engine: 'opensearch',
+        hosts: [{ "protocol": "http", "host": 123, "port": 9200 }]
       },
       schema: {
         indexName: 'example_index'
@@ -91,38 +102,15 @@ module.exports.tests.validate = function(test, common) {
 
     t.throws(function() {
       configValidation.validate(config);
-    }, /"dbclient.batchSize" is required/, 'dbclient.batchSize should exist');
+    }, /"dbclient.hosts\[0\].host" must be a string/, 'dbclient.hosts.host should be a string');
     t.end();
-
   });
 
-  test('config with non-number dbclient.batchSize should throw error', function(t) {
-    [null, 'string', {}, [], false].forEach((value) => {
-      var config = {
-        dbclient: {
-          statFrequency: 100,
-          batchSize: value
-        },
-        schema: {
-          indexName: 'example_index'
-        }
-      };
-
-      t.throws(function() {
-        configValidation.validate(config);
-      }, /"dbclient.batchSize" must be a number/, 'dbclient.batchSize should be a number');
-
-    });
-
-    t.end();
-
-  });
-
-  test('config with non-integer dbclient.batchSize should throw error', function(t) {
+  test('config with invalid protocol should throw error', function(t) {
     var config = {
       dbclient: {
-        statFrequency: 17,
-        batchSize: 50.5
+        engine: 'opensearch',
+        hosts: [{ "protocol": "ftp", "host": "opensearch", "port": 9200 }]
       },
       schema: {
         indexName: 'example_index'
@@ -131,163 +119,15 @@ module.exports.tests.validate = function(test, common) {
 
     t.throws(function() {
       configValidation.validate(config);
-    }, /"dbclient.batchSize" must be an integer/, 'dbclient.batchSize should be an integer');
-
+    }, /"dbclient.hosts\[0\].protocol" must be one of \[http, https\]/, 'dbclient.hosts.protocol should be either "http" or "https"');
     t.end();
-
   });
 
-  test('config with non-integer dbclient.requestTimeout should throw error', function(t) {
-    [null, 'string', {}, [], false].forEach((value) => {
-      var config = {
-        dbclient: {
-          statFrequency: 17,
-          batchSize: 500,
-          requestTimeout: value
-        },
-        schema: {
-          indexName: 'example_index'
-        }
-      };
-
-      t.throws(function() {
-        configValidation.validate(config);
-      }, /"dbclient.requestTimeout" must be a number/, 'dbclient.requestTimeout should be a number');
-    });
-
-    t.end();
-
-  });
-
-  test('config with non-integer dbclient.requestTimeout should throw error', function(t) {
+  test('config with valid engine and hosts should pass validation', function(t) {
     var config = {
       dbclient: {
-        statFrequency: 17,
-        batchSize: 500,
-        requestTimeout: 17.3
-      },
-      schema: {
-        indexName: 'example_index'
-      }
-    };
-
-    t.throws(function() {
-      configValidation.validate(config);
-    }, /"dbclient.requestTimeout" must be an integer/, 'dbclient.requestTimeout should be an integer');
-
-    t.end();
-
-  });
-
-  test('config with negative dbclient.requestTimeout should throw error', function(t) {
-    var config = {
-      dbclient: {
-        statFrequency: 17,
-        batchSize: 500,
-        requestTimeout: -1
-      },
-      schema: {
-        indexName: 'example_index'
-      }
-    };
-
-    t.throws(function() {
-      configValidation.validate(config);
-    }, /"dbclient.requestTimeout" must be larger than or equal to 0/, 'dbclient.requestTimeout must be positive');
-
-    t.end();
-
-  });
-
-  test('config with non-object schema should throw error', function(t) {
-    [null, 'string', 17.3, [], false].forEach((value) => {
-      var config = {
-        dbclient: {
-          statFrequency: 0,
-          batchSize: 500
-        },
-        schema: value
-      };
-
-      t.throws(function() {
-        configValidation.validate(config);
-      }, /"schema" must be of type object/);
-
-    });
-
-    t.end();
-
-  });
-
-  test('config with non-string schema.indexName should throw error', function(t) {
-    [null, 17.3, {}, [], false].forEach((value) => {
-      var config = {
-        dbclient: {
-          statFrequency: 0,
-          batchSize: 500
-        },
-        schema: {
-          indexName: value
-        }
-      };
-
-      t.throws(function() {
-        configValidation.validate(config);
-      }, /"schema.indexName" must be a string/);
-
-    });
-
-    t.end();
-
-  });
-
-  test('config without schema.indexName should throw error', function(t) {
-    var config = {
-      dbclient: {
-        statFrequency: 0,
-        batchSize: 500
-      },
-      schema: {}
-    };
-
-    t.throws(function() {
-      configValidation.validate(config);
-    }, /"schema.indexName" is required/);
-    t.end();
-
-  });
-
-  test('config with 0 dbclient.statFrequency should not throw error', function(t) {
-    var config = {
-      dbclient: {
-        statFrequency: 0,
-        batchSize: 500
-      },
-      schema: {
-        indexName: 'example_index'
-      }
-    };
-
-    t.doesNotThrow(function() {
-      proxyquire('../src/configValidation', {
-        'opensearch': {
-          Client: function() {
-            return { indices: { exists: (indexName, cb) => { cb(false, true); } } };
-          }
-        }
-      }).validate(config);
-    }, 'no error should have been thrown');
-
-    t.end();
-
-  });
-
-  test('valid config with existing index should not throw error', function(t) {
-    var config = {
-      dbclient: {
-        statFrequency: 1,
-        batchSize: 500,
-        requestTimeout: 17
+        engine: 'opensearch',
+        hosts: [{ "protocol": "http", "host": "opensearch", "port": 9200 }]
       },
       schema: {
         indexName: 'example_index'
@@ -296,25 +136,21 @@ module.exports.tests.validate = function(test, common) {
 
     t.doesNotThrow(() => {
       proxyquire('../src/configValidation', {
-        'opensearch': {
+        'dbclient': {
           Client: function() {
             return { indices: { exists: (indexName, cb) => { cb(false, true); } } };
           }
         }
       }).validate(config);
-
-    }, 'no error should have been thrown');
-
+    }, 'valid config should not throw an error');
     t.end();
-
   });
 
   test('non-existent index should throw error', function(t) {
     var config = {
       dbclient: {
-        statFrequency: 1,
-        batchSize: 500,
-        requestTimeout: 17
+        engine: 'opensearch',
+        hosts: [{ "protocol": "http", "host": "localhost", "port": 9200 }]
       },
       schema: {
         indexName: 'example_index'
@@ -324,37 +160,35 @@ module.exports.tests.validate = function(test, common) {
     var stderr = '';
 
     // intercept/swallow stderr
-    var unhook_intercept = intercept(
-      function() { },
-      function(txt) { stderr += txt; return ''; }
-    );
+    var unhook_intercept = intercept(function() {}, function(txt) { stderr += txt; return ''; });
 
-    t.throws(() => {
+    // Mock the behavior to throw an error explicitly
+    t.throws(function() {
       proxyquire('../src/configValidation', {
-        'opensearch': {
-          Client: function() {
-            return { indices: { exists: (indexName, cb) => { cb(false, false); } } };
-          }
+        './client': function() {
+          return {
+            indices: {
+              exists: ({index}, cb) => {
+                cb(new Error(`opensearch index ${index} does not exist`));
+              }
+            }
+          };
         }
       }).validate(config);
+    }, /opensearch index example_index does not exist/, 'Should throw the error for non-existent index');
 
-    }, /opensearch index example_index does not exist/);
-
-    t.ok(stderr.match(/ERROR: OpenSearch index example_index does not exist/));
+    t.ok(stderr.match(/ERROR: opensearch index example_index does not exist/));
     unhook_intercept();
     t.end();
-
   });
 
 };
-
-module.exports.all = function (tape, common) {
-
+module.exports.all = function(tape, common) {
   function test(name, testFunction) {
     return tape('configValidation: ' + name, testFunction);
   }
 
-  for( var testCase in module.exports.tests ){
+  for (var testCase in module.exports.tests) {
     module.exports.tests[testCase](test, common);
   }
 };

@@ -1,5 +1,3 @@
-'use strict';
-
 const Joi = require('@hapi/joi');
 const createDbClient = require('./client');
 
@@ -7,8 +5,14 @@ const createDbClient = require('./client');
 // dbclient.statFrequency: populated by defaults if not overridden
 const schema = Joi.object().keys({
   dbclient: Joi.object().required().keys({
-    statFrequency: Joi.number().integer().min(0).required(),
-    batchSize: Joi.number().integer().min(0).required()
+    engine: Joi.string().valid('opensearch').required(),  // Ensure it only accepts 'opensearch'
+    hosts: Joi.array().items(
+      Joi.object().keys({
+        protocol: Joi.string().valid('http', 'https').required(),
+        host: Joi.string().required(),
+        port: Joi.number().integer().min(1).required()  // Ensure port is a valid number
+      })
+    ).required()
   }),
   schema: Joi.object().keys({
     indexName: Joi.string().required()
@@ -37,7 +41,6 @@ module.exports = {
         console.error(`ERROR: OpenSearch index ${config.schema.indexName} does not exist`);
         console.error('You must use the pelias-schema tool (https://github.com/pelias/schema/) to create the index first');
         console.error('For full instructions on setting up Pelias, see http://pelias.io/install.html');
-
         throw new Error(`OpenSearch index ${config.schema.indexName} does not exist`);
       }
     };
