@@ -15,18 +15,6 @@ function getDatabaseConfig() {
 }
 /**
  * Factory for creating a search client.
- *
- * ⚠️ Config note:
- * We reuse the existing `esclient` block from pelias.json for both Elasticsearch
- * and OpenSearch. This avoids introducing a new `osclient` key.
- * If Pelias were being designed from scratch today, a dedicated `osclient` key
- * would likely be cleaner — but `esclient` works for both backends.
- *
- * Selection rules:
- * - If PELIAS_OPENSEARCH=true → use OpenSearch
- *   - Prefer OPENSEARCH_NODE env var
- *   - Else fall back to esclient.hosts[0] in pelias.json
- * - Else → use Elasticsearch with full esclient config
  */
 module.exports = function createDbClient() {
   const { engine, config, hosts } = getDatabaseConfig();
