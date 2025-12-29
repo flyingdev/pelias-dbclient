@@ -33,18 +33,6 @@ function HealthCheck( client ){
 
 util.inherits( HealthCheck, EventEmitter );
 
-// var grant = 'host ip bulk.active bulk.queue bulk.rejected\n';
-// grant += 'elasticsearch13.localdomain 127.0.1.1 0 0    0\n';
-// grant += 'elasticsearch14.localdomain 127.0.1.1 0 0    0\n';
-// grant += 'elasticsearch5.localdomain  127.0.1.1 0 0  686\n';
-// grant += 'elasticsearch1.localdomain  127.0.1.1 0 0  814\n';
-// grant += 'elasticsearch2.localdomain  127.0.1.1 0 0  829\n';
-// grant += 'elasticsearch6.localdomain  127.0.1.1 0 0  641\n';
-// grant += 'elasticsearch8.localdomain  127.0.1.1 0 0    0\n';
-// grant += 'elasticsearch3.localdomain  127.0.1.1 0 0 1201\n';
-// grant += 'elasticsearch4.localdomain  127.0.1.1 0 0  994\n';
-// grant += 'elasticsearch7.localdomain  127.0.1.1 0 0   20';
-
 HealthCheck.code = {
   CONTINUE: 1,
   BACKOFF:  2
