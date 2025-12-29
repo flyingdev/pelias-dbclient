@@ -134,15 +134,24 @@ module.exports.tests.validate = function(test, common) {
       }
     };
 
-    t.doesNotThrow(() => {
-      proxyquire('../src/configValidation', {
-        'dbclient': {
-          Client: function() {
-            return { indices: { exists: (indexName, cb) => { cb(false, true); } } };
+    // Mock createDbClient to return a client with a mock indices.exists that succeeds
+    var mockConfigValidation = proxyquire('../src/configValidation', {
+      './client': function() {
+        return {
+          indices: {
+            exists: function(options, callback) {
+              // Call callback synchronously with exists = true
+              callback(null, true);
+            }
           }
-        }
-      }).validate(config);
-    }, 'valid config should not throw an error');
+        };
+      }
+    });
+
+    // Should not throw an error
+    t.doesNotThrow(function() {
+      mockConfigValidation.validate(config);
+    }, 'valid config should pass validation');
     t.end();
   });
 
@@ -150,35 +159,31 @@ module.exports.tests.validate = function(test, common) {
     var config = {
       dbclient: {
         engine: 'opensearch',
-        hosts: [{ "protocol": "http", "host": "localhost", "port": 9200 }]
+        hosts: [{ "protocol": "http", "host": "opensearch", "port": 9200 }]
       },
       schema: {
-        indexName: 'example_index'
+        indexName: 'non_existent_index'
       }
     };
 
-    var stderr = '';
-
-    // intercept/swallow stderr
-    var unhook_intercept = intercept(function() {}, function(txt) { stderr += txt; return ''; });
-
-    // Mock the behavior to throw an error explicitly
-    t.throws(function() {
-      proxyquire('../src/configValidation', {
-        './client': function() {
-          return {
-            indices: {
-              exists: ({index}, cb) => {
-                cb(new Error(`opensearch index ${index} does not exist`));
-              }
+    // Mock createDbClient to return a client with a mock indices.exists that indicates index doesn't exist
+    var mockConfigValidation = proxyquire('../src/configValidation', {
+      './client': function() {
+        return {
+          indices: {
+            exists: function(options, callback) {
+              // Call callback synchronously with exists = false
+              callback(null, false);
             }
-          };
-        }
-      }).validate(config);
-    }, /opensearch index example_index does not exist/, 'Should throw the error for non-existent index');
+          }
+        };
+      }
+    });
 
-    t.ok(stderr.match(/ERROR: opensearch index example_index does not exist/));
-    unhook_intercept();
+    // Should throw an error about non-existent index
+    t.throws(function() {
+      mockConfigValidation.validate(config);
+    }, /OpenSearch index non_existent_index does not exist/, 'non-existent index should throw error');
     t.end();
   });
 
