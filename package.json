@@ -1,6 +1,6 @@
 {
   "name": "flyingdev-pelias-dbclient-opensearch",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Database client for Pelias import pipelines",
   "engines": {
     "node": ">=10.0.0"

@@ -7,13 +7,16 @@ const schema = Joi.object().keys({
   dbclient: Joi.object().required().keys({
     engine: Joi.string().valid('opensearch').required(),  // Ensure it only accepts 'opensearch'
     hosts: Joi.array().items(
-      Joi.object().keys({
-        protocol: Joi.string().valid('http', 'https').required(),
+      Joi.object({
+        protocol: Joi.string().required(),
         host: Joi.string().required(),
-        port: Joi.number().integer().min(1).required()  // Ensure port is a valid number
+        port: Joi.number().integer().required()
       })
-    ).required()
-  }),
+    ).required(),
+    statFrequency: Joi.number().integer().min(0).optional(),
+    batchSize: Joi.number().integer().min(0).optional(),
+    requestTimeout: Joi.number().integer().min(0).optional()
+  }).required(),
   schema: Joi.object().keys({
     indexName: Joi.string().required()
   })
